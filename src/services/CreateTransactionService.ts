@@ -9,19 +9,23 @@ class CreateTransactionService {
   }
 
   public execute({ title, value, type }: Omit<Transaction, 'id'>): Transaction {
-    const transaction = new Transaction({ title, value, type });
-
-    if (type === 'outcome') {
-      const { total } = this.transactionsRepository.getBalance();
-
-      if (total < value) {
-        throw Error(`You don't have all this money bro!`);
-      }
+    if (!['income', 'outcome'].includes(type)) {
+      throw Error('Transaction type is invalid');
     }
 
-    const createdTransaction = this.transactionsRepository.create(transaction);
+    const { total } = this.transactionsRepository.getBalance();
 
-    return createdTransaction;
+    if (type === 'outcome' && total < value) {
+      throw Error(`You don't have all this money bro!`);
+    }
+
+    const createTransaction = this.transactionsRepository.create({
+      title,
+      value,
+      type,
+    });
+
+    return createTransaction;
   }
 }
 

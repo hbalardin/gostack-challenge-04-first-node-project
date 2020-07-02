@@ -18,21 +18,28 @@ class TransactionsRepository {
   }
 
   public getBalance(): Balance {
-    const incomeTransactions = this.transactions.filter(
-      transaction => transaction.type === 'income',
-    );
-    const outcomeTransactions = this.transactions.filter(
-      transaction => transaction.type === 'outcome',
+    const { income, outcome } = this.transactions.reduce(
+      (accumulator: Balance, currentValue: Transaction): Balance => {
+        switch (currentValue.type) {
+          case 'income':
+            accumulator.income += currentValue.value;
+            break;
+          case 'outcome':
+            accumulator.outcome += currentValue.value;
+            break;
+          default:
+            break;
+        }
+
+        return accumulator;
+      },
+      {
+        income: 0,
+        outcome: 0,
+        total: 0,
+      },
     );
 
-    const income = incomeTransactions.reduce(
-      (previousValue, currentValue) => previousValue + currentValue.value,
-      0,
-    );
-    const outcome = outcomeTransactions.reduce(
-      (previousValue, currentValue) => previousValue + currentValue.value,
-      0,
-    );
     const total = income - outcome;
 
     return {
@@ -42,7 +49,8 @@ class TransactionsRepository {
     };
   }
 
-  public create(transaction: Transaction): Transaction {
+  public create({ title, value, type }: Omit<Transaction, 'id'>): Transaction {
+    const transaction = new Transaction({ title, value, type });
     this.transactions.push(transaction);
 
     return transaction;
